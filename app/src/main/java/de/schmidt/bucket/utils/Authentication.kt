@@ -1,14 +1,16 @@
-package de.schmidt.bucket.managers
+package de.schmidt.bucket.utils
 
 import android.app.Activity
-import android.content.Context
+import android.app.AlertDialog
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import de.schmidt.bucket.R
+import de.schmidt.bucket.activities.AllSetActivity
 
 class Authentication {
 
@@ -60,5 +62,44 @@ class Authentication {
         }
 
         fun getCurrentlyAuthenticatedUser(): FirebaseUser? = FirebaseAuth.getInstance().currentUser
+
+        fun signOut(context: Activity, complete: () -> Unit = {
+            context.runOnUiThread{ Toast.makeText(context, "Signed out", Toast.LENGTH_SHORT).show() }
+        }) {
+            AuthUI.getInstance().signOut(context).addOnCompleteListener {
+                //restart main activity after sign-out
+                context.finish()
+                context.startActivity(Intent(context, AllSetActivity::class.java))
+
+                //call the passed listener
+                complete()
+            }
+        }
+
+        fun delete(context: Activity, complete: () -> Unit = {
+            context.runOnUiThread{ Toast.makeText(context, "Deleted account", Toast.LENGTH_SHORT).show() }
+        }) {
+            //verify deletion
+            AlertDialog.Builder(context)
+                .setTitle("Delete account?")
+                .setMessage("Do you really wish to delete your account?")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Yes") { _, _ ->
+                    AuthUI.getInstance().delete(context).addOnCompleteListener {
+                        //restart main activity after sign-out
+                        context.finish()
+                        context.startActivity(Intent(context, AllSetActivity::class.java))
+
+                        //call the passed listener
+                        complete()
+                    }
+                }
+                .create()
+                .show()
+        }
+
+        fun setOnStateChangeListener(onStateChange: (FirebaseAuth) -> Unit) {
+            FirebaseAuth.getInstance().addAuthStateListener(onStateChange)
+        }
     }
 }
