@@ -61,6 +61,7 @@
     />
 
     <Button
+            android:id="@+id/download_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Download"
@@ -70,6 +71,19 @@
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp"
             android:layout_below="@id/signed_in_info_newdocument"
+    />
+
+    <ProgressBar
+            android:id="@+id/download_progress_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_below="@id/download_button"
+            android:layout_marginTop="10dp"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:visibility="invisible"
+            android:progress="0"
     />
 
 </RelativeLayout>

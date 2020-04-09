@@ -15,10 +15,14 @@ import de.schmidt.bucket.activities.AllSetActivity
 class Authentication {
 
     companion object {
-        val currentUser get() = FirebaseAuth.getInstance().currentUser
+        private val auth = FirebaseAuth.getInstance()
+        private val authUI = AuthUI.getInstance()
+
+        val currentUser get() = auth.currentUser
         private const val signInRequestCode = 0xFF
         private var successfulCallback: (() -> Unit)? = null
         private var errorCallback: ((IdpResponse?) -> Unit)? = null
+
 
         fun initiateSignIn(context: Activity) {
             //we want google and e-mail as sign in methods
@@ -29,7 +33,7 @@ class Authentication {
 
             //launch sign-in
             context.startActivityForResult(
-                AuthUI.getInstance()
+                authUI
                     .createSignInIntentBuilder()
                     .setLogo(R.mipmap.ic_launcher)
                     .setAvailableProviders(providers)
@@ -65,7 +69,7 @@ class Authentication {
         fun signOut(context: Activity, complete: () -> Unit = {
             context.runOnUiThread{ Toast.makeText(context, "Signed out", Toast.LENGTH_SHORT).show() }
         }) {
-            AuthUI.getInstance().signOut(context).addOnCompleteListener {
+            authUI.signOut(context).addOnCompleteListener {
                 //restart main activity after sign-out
                 context.finish()
                 context.startActivity(Intent(context, AllSetActivity::class.java))
@@ -84,7 +88,7 @@ class Authentication {
                 .setMessage("Do you really wish to delete your account?")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Yes") { _, _ ->
-                    AuthUI.getInstance().delete(context).addOnCompleteListener {
+                    authUI.delete(context).addOnCompleteListener {
                         //restart main activity after sign-out
                         context.finish()
                         context.startActivity(Intent(context, AllSetActivity::class.java))
@@ -98,7 +102,7 @@ class Authentication {
         }
 
         fun setOnStateChangeListener(onStateChange: (FirebaseAuth) -> Unit) {
-            FirebaseAuth.getInstance().addAuthStateListener(onStateChange)
+            auth.addAuthStateListener(onStateChange)
         }
     }
 }
