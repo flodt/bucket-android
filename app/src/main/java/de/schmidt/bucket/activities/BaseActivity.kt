@@ -38,7 +38,7 @@ abstract class BaseActivity: AppCompatActivity() {
         updateUI()
 
         //trigger sign-in if not already signed in
-        if (Authentication.getCurrentlyAuthenticatedUser() == null) {
+        if (Authentication.currentUser == null) {
             Authentication.initiateSignIn(this)
         }
     }

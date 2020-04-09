@@ -15,6 +15,7 @@ import de.schmidt.bucket.activities.AllSetActivity
 class Authentication {
 
     companion object {
+        val currentUser get() = FirebaseAuth.getInstance().currentUser
         private const val signInRequestCode = 0xFF
         private var successfulCallback: (() -> Unit)? = null
         private var errorCallback: ((IdpResponse?) -> Unit)? = null
@@ -60,8 +61,6 @@ class Authentication {
         fun setOnErrorListener(callback: (IdpResponse?) -> Unit) {
             errorCallback = callback
         }
-
-        fun getCurrentlyAuthenticatedUser(): FirebaseUser? = FirebaseAuth.getInstance().currentUser
 
         fun signOut(context: Activity, complete: () -> Unit = {
             context.runOnUiThread{ Toast.makeText(context, "Signed out", Toast.LENGTH_SHORT).show() }
