@@ -101,13 +101,6 @@ class NewDocumentActivity : BaseActivity() {
 
             }
         }
-
-        //done: delete downloaded file
-        //done: add clear button to delete the files in the buffer
-
-        //todo send notification for finished file download
-        //todo handle activity lifecycle changes in download
-        //todo add activity to upload file
     }
 
     override fun refresh() {
