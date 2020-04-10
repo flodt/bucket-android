@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.utils.Authentication
 import de.schmidt.bucket.utils.MenuUtils
+import de.schmidt.bucket.utils.NotificationUtils
 
 abstract class BaseActivity: AppCompatActivity() {
     private val STORAGE_PERMISSION_REQUEST: Int = 0xFF0F
@@ -47,6 +48,9 @@ abstract class BaseActivity: AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
+        //register notification channel
+        NotificationUtils.createNotificationChannel(this)
 
         //add refresh trigger to swipeRefreshLayout
         swipeRefresh?.setOnRefreshListener { refresh() }

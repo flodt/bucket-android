@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Bucket</string>
+    <string name="channel_name">Bucket</string>
+    <string name="channel_description">Upload and download notifications</string>
 </resources>

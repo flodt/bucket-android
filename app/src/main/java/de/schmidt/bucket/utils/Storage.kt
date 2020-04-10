@@ -74,6 +74,15 @@ class Storage {
                 }
         }
 
+        fun deleteFileAndThen(ref: StorageReference, context: Activity, execute: () -> Unit) {
+            ref.delete()
+                .addOnSuccessListener { execute() }
+                .addOnFailureListener {
+                    context.runOnUiThread { Toast.makeText(context, "File deletion error!", Toast.LENGTH_SHORT).show() }
+                    Log.e("FirebaseStorage", "File delete error", it)
+                }
+        }
+
         fun File.createInDirectory(nameWithExtension: String): File {
             //initialize file
             var local = File(this, nameWithExtension)

@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
 import de.schmidt.bucket.utils.Authentication
+import de.schmidt.bucket.utils.NotificationUtils
 import de.schmidt.bucket.utils.Storage
 import kotlinx.android.synthetic.main.activity_all_set.*
 
@@ -31,7 +32,7 @@ class AllSetActivity : BaseActivity() {
         titleText = findViewById(R.id.all_set_textview)
         infoLabel = findViewById(R.id.upload_file_info)
 
-        //for debugging purposes: show UID on longpress
+        //for debugging purposes: show UID on longpress, send notification icon
         emailLabel.isLongClickable = true
         emailLabel.setOnLongClickListener {
             Toast.makeText(this, Authentication.currentUser?.uid, Toast.LENGTH_SHORT).show()

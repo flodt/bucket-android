@@ -18,11 +18,13 @@ import androidx.core.content.FileProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
 import de.schmidt.bucket.utils.Authentication
+import de.schmidt.bucket.utils.NotificationUtils
 import de.schmidt.bucket.utils.Storage
 
 class NewDocumentActivity : BaseActivity() {
     private lateinit var emailLabel: TextView
     private lateinit var downloadButton: Button
+    private lateinit var clearButton: Button
     private lateinit var progressBar: ProgressBar
     override val swipeRefresh: SwipeRefreshLayout?
         get() = findViewById(R.id.pull_to_refresh_new_document)
@@ -34,7 +36,19 @@ class NewDocumentActivity : BaseActivity() {
 
         emailLabel = findViewById(R.id.signed_in_info_newdocument)
         downloadButton = findViewById(R.id.download_button)
+        clearButton = findViewById(R.id.clear_button)
         progressBar = findViewById(R.id.download_progress_bar)
+
+        clearButton.setOnClickListener {
+            Storage.listFilesAndThen { list ->
+                list.forEach {
+                    Storage.deleteFileAndThen(it, this) {
+                        Log.d("FirebaseStorage", "deleted file…")
+                        refresh()
+                    }
+                }
+            }
+        }
 
         downloadButton.setOnClickListener {
             if (downloading) return@setOnClickListener
@@ -44,14 +58,15 @@ class NewDocumentActivity : BaseActivity() {
             refresh()
 
             //initiate download of the first file in the list
-            Storage.listFilesAndThen {
+            Storage.listFilesAndThen { list ->
                 //get first references
-                val first = it[0]
+                val first = list[0]
 
                 //start download
                 Storage.downloadFileAndThen(first, this, progressBar) { file, type ->
                     Log.d("FirebaseStorage", "Received ${file.absolutePath} with type $type")
 
+                    //send notification to open the downloaded file
                     //open the downloaded file
                     Intent().apply {
                         setType(type)
@@ -62,24 +77,36 @@ class NewDocumentActivity : BaseActivity() {
                         action = Intent.ACTION_VIEW
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
                     }.let {
-                        try {
+                        /*try {
                             startActivity(it)
                         } catch (e: ActivityNotFoundException) {
                             Toast.makeText(this, "There's no program to open this file", Toast.LENGTH_LONG).show()
-                        }
+                        }*/
+
+                        //pass to notification
+                        NotificationUtils.fireDownloadedNotification(
+                            this, "File downloaded", file.name, it
+                        )
                     }
 
-                    downloading = false
-                    progressBar.visibility = View.INVISIBLE
+                    //delete the downloaded file from the bucket
+                    Storage.deleteFileAndThen(first, this) {
+                        downloading = false
+                        progressBar.visibility = View.INVISIBLE
+                        refresh()
+                    }
+                    //downloading = false
+                    //progressBar.visibility = View.INVISIBLE
                 }
 
             }
         }
 
-        //todo delete downloaded file
+        //done: delete downloaded file
+        //done: add clear button to delete the files in the buffer
+
         //todo send notification for finished file download
         //todo handle activity lifecycle changes in download
-        //todo add clear button to delete the files in the buffer
         //todo add activity to upload file
     }
 
