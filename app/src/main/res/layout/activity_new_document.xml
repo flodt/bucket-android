@@ -48,15 +48,15 @@
                 android:id="@+id/all_set_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="1 new document."
+                android:text="Pending document"
                 android:textStyle="bold"
-                android:textSize="35dp"
+                android:textSize="33dp"
                 android:textColor="@color/colorPrimaryDarker"
                 android:layout_toRightOf="@id/image_ok"
                 android:layout_alignTop="@id/image_ok"
                 android:gravity="center_vertical"
                 android:layout_alignBottom="@id/image_ok"
-                android:layout_marginLeft="20dp"
+                android:layout_marginLeft="15dp"
         />
     </RelativeLayout>
 

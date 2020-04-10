@@ -1,8 +1,10 @@
 package de.schmidt.bucket.activities
 
 import android.app.DownloadManager
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -10,7 +12,9 @@ import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.ShareCompat
+import androidx.core.content.FileProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
 import de.schmidt.bucket.utils.Authentication
@@ -22,6 +26,7 @@ class NewDocumentActivity : BaseActivity() {
     private lateinit var progressBar: ProgressBar
     override val swipeRefresh: SwipeRefreshLayout?
         get() = findViewById(R.id.pull_to_refresh_new_document)
+    private var downloading = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +37,9 @@ class NewDocumentActivity : BaseActivity() {
         progressBar = findViewById(R.id.download_progress_bar)
 
         downloadButton.setOnClickListener {
+            if (downloading) return@setOnClickListener
+            downloading = true
+
             //refresh to verify we have a file
             refresh()
 
@@ -42,26 +50,37 @@ class NewDocumentActivity : BaseActivity() {
 
                 //start download
                 Storage.downloadFileAndThen(first, this, progressBar) { file, type ->
-                    //get the download manager service to hand over the downloaded file
-                    val downloadManager: DownloadManager = this.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-                    downloadManager.addCompletedDownload(
-                        file.name,
-                        file.nameWithoutExtension,
-                        true,
-                        type,
-                        file.absolutePath,
-                        file.length(),
-                        true
-                    )
+                    Log.d("FirebaseStorage", "Received ${file.absolutePath} with type $type")
+
+                    //open the downloaded file
+                    Intent().apply {
+                        setType(type)
+                        data = FileProvider.getUriForFile(
+                            this@NewDocumentActivity,
+                            applicationContext.packageName + ".provider",
+                            file)
+                        action = Intent.ACTION_VIEW
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    }.let {
+                        try {
+                            startActivity(it)
+                        } catch (e: ActivityNotFoundException) {
+                            Toast.makeText(this, "There's no program to open this file", Toast.LENGTH_LONG).show()
+                        }
+                    }
+
+                    downloading = false
+                    progressBar.visibility = View.INVISIBLE
                 }
 
-                //todo delete downloaded file
             }
         }
 
+        //todo delete downloaded file
+        //todo send notification for finished file download
+        //todo handle activity lifecycle changes in download
         //todo add clear button to delete the files in the buffer
         //todo add activity to upload file
-        //todo handle activity lifecycle changes in download
     }
 
     override fun refresh() {
