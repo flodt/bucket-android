@@ -6,7 +6,7 @@
   <img alt="Version" src="https://img.shields.io/badge/version-alpha-red.svg" />
 </p>
 
-> Bucket will be a fast and easy way to transport files between your mobile device and your computer. No more e-mailing files back and forth but simple and easy uploading and downloading on either side.
+> Bucket is be a fast and easy way to transport files between your mobile device and your computer. No more e-mailing files back and forth but simple and easy uploading and downloading on either side!
 
 ### ✨ [Soon on Google Play](https://play.google.com/)
 
