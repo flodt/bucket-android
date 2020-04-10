@@ -4,12 +4,15 @@ import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.net.toFile
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
 import de.schmidt.bucket.activities.BaseActivity
+import de.schmidt.bucket.activities.NewDocumentActivity
 
 class UploadActivity : BaseActivity() {
     override val swipeRefresh: SwipeRefreshLayout?
@@ -30,8 +33,15 @@ class UploadActivity : BaseActivity() {
             val uri: Uri? = intent?.getParcelableExtra(Intent.EXTRA_STREAM)
             uri ?: return
 
-            //toast the URI
-            Toast.makeText(this, uri.toString(), Toast.LENGTH_LONG).show()
+            Log.d("UploadActivity", "Uploading URI $uri")
+
+            //upload file (this clears the bucket)
+            Storage.uploadFileAndThen(uri, this, progress) {
+                Toast.makeText(this, "File upload successful", Toast.LENGTH_SHORT).show()
+
+                //start the new document activity, file was uploaded
+                startActivity(Intent(this, NewDocumentActivity::class.java))
+            }
         }
     }
 

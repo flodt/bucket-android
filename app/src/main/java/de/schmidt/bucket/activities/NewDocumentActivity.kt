@@ -40,13 +40,9 @@ class NewDocumentActivity : BaseActivity() {
         progressBar = findViewById(R.id.download_progress_bar)
 
         clearButton.setOnClickListener {
-            Storage.listFilesAndThen { list ->
-                list.forEach {
-                    Storage.deleteFileAndThen(it, this) {
-                        Log.d("FirebaseStorage", "deleted file…")
-                        refresh()
-                    }
-                }
+            Storage.deleteAllFilesAndThen(this) {
+                Log.d("FirebaseStorage", "Deleted bucket contents")
+                refresh()
             }
         }
 

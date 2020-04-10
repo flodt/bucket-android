@@ -1,13 +1,18 @@
 package de.schmidt.bucket.utils
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.database.Cursor
+import android.net.Uri
 import android.os.Environment
+import android.provider.OpenableColumns
 import android.util.Log
 import android.view.View
 import android.webkit.MimeTypeMap
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.core.net.toFile
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
@@ -27,6 +32,12 @@ class Storage {
             reference.listAll()
                 .addOnSuccessListener { execute(it.items.filterNotNull()) }
                 .addOnFailureListener { Log.e("FirebaseStorage", "An error occurred during file listing.") }
+        }
+
+        fun isBucketEmpty(callback: (Boolean) -> Unit) {
+            listFilesAndThen {
+                callback(it.isEmpty())
+            }
         }
 
         fun downloadFileAndThen(
@@ -83,6 +94,62 @@ class Storage {
                 }
         }
 
+        fun deleteAllFilesAndThen(context: Activity, execute: () -> Unit) {
+            listFilesAndThen { list ->
+                //if the list is already empty, execute the callback
+                if (list.isEmpty()) execute()
+
+                //else clear all files, then execute the callback
+                list.forEachIndexed { i, ref ->
+                    deleteFileAndThen(ref, context) {
+                        //execute the callback after the last deletion
+                        if (i == list.size - 1) execute()
+                    }
+                }
+            }
+        }
+
+        fun uploadFileAndThen(uri: Uri, context: Activity, progress: ProgressBar? = null, execute: (StorageReference) -> Unit) {
+            Log.d("FirebaseStorage", "Clearing buckets…")
+            //clear the bucket if it's not empty
+            deleteAllFilesAndThen(context) {
+                Log.d("FirebaseStorage", "Bucket cleared")
+
+                //create reference for the uploaded file
+                val ref = storage
+                    .reference
+                    .child("buckets")
+                    .child(Authentication.currentUser?.uid.toString())
+                    .child(uri.getFileName(context))
+
+                Log.d("FirebaseStorage", "Uploading to reference ${ref.path}")
+
+                //extract input stream
+                val stream = context.contentResolver.openInputStream(uri)
+                stream ?: return@deleteAllFilesAndThen
+                val size = uri.getFileSize(context)
+
+                ref.putStream(stream)
+                    .addOnSuccessListener {
+                        Log.d("FirebaseStorage", "Upload successful")
+                        execute(ref)
+                    }
+                    .addOnFailureListener {
+                        context.runOnUiThread { Toast.makeText(context, "File upload error!", Toast.LENGTH_SHORT).show() }
+                        Log.e("FirebaseStorage", "File upload error", it)
+                    }
+                    .addOnProgressListener {
+                        if (progress != null) {
+                            //update progress bar if present, set indeterminate if we don't know the size (-1)
+                            progress.isIndeterminate = size == -1L
+                            val current = 100 * ((it.bytesTransferred.toDouble()) / (size.toDouble()))
+                            Log.d("FirebaseStorage", "Progress call ${it.bytesTransferred}/$size bytes, progress $current")
+                            progress.progress = current.toInt()
+                        }
+                    }
+            }
+        }
+
         fun File.createInDirectory(nameWithExtension: String): File {
             //initialize file
             var local = File(this, nameWithExtension)
@@ -102,6 +169,47 @@ class Storage {
             Log.d("FirebaseStorage", "Created file for download as ${local.absolutePath}")
 
             return local
+        }
+
+        fun Uri.getFileName(context: Activity): String {
+            var result: String? = null
+
+            //try the nice way
+            if (scheme == "content") {
+                val cursor: Cursor? = context.contentResolver.query(this, null, null, null, null)
+
+                try {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                    }
+                } finally {
+                    cursor?.close()
+                }
+            }
+
+            //else we extract manually
+            if (result == null) {
+                result = path
+                val lastDelimiter = result?.lastIndexOf('/')
+                if (lastDelimiter != null && lastDelimiter != -1) {
+                    result = result?.substring(lastDelimiter + 1)
+                }
+            }
+
+            return result ?: ""
+        }
+
+        @SuppressLint("Recycle")
+        fun Uri.getFileSize(context: Activity): Long {
+            context
+                .contentResolver
+                .query(this, null, null, null, null)
+                .let { it ?: return -1 }
+                .use {
+                    val sizeIndex = it.getColumnIndex(OpenableColumns.SIZE)
+                    it.moveToFirst()
+                    return it.getLong(sizeIndex)
+                }
         }
     }
 
