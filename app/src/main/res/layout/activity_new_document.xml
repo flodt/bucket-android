@@ -7,6 +7,17 @@
         android:layout_height="match_parent"
         tools:context=".activities.NewDocumentActivity">
 
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/pull_to_refresh_new_document"
+        >
+        <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+        </ScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
     <ImageView
             android:id="@+id/image_bucket_full_newdocument"
             android:layout_width="175dp"

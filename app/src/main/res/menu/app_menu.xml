@@ -1,6 +1,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+            android:id="@+id/refresh_button"
+            android:title="Refresh"
+            app:showAsAction="ifRoom"
+            android:icon="@drawable/ic_refresh"
+    />
+    <item
             android:id="@+id/delete_account_button"
             android:title="Delete account…"
             app:showAsAction="never"

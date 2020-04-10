@@ -7,6 +7,17 @@
         android:layout_height="match_parent"
         tools:context=".activities.AllSetActivity">
 
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/pull_to_refresh_all_set"
+            app:layout_constraintBottom_toTopOf="parent">
+        <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+        </ScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
     <ImageView
             android:id="@+id/image_bucket_empty_allset"
             android:layout_width="175dp"
@@ -29,18 +40,18 @@
                 android:id="@+id/image_ok"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
-                android:src="@drawable/ic_ok"
-                android:contentDescription="OK Icon"
+                android:src="@drawable/ic_err"
+                android:contentDescription="Status Icon"
         />
 
         <TextView
                 android:id="@+id/all_set_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="You're all set."
+                android:text="Sign in…"
                 android:textStyle="bold"
                 android:textSize="35dp"
-                android:textColor="@color/greenAccent"
+                android:textColor="@color/greyAccent"
                 android:layout_toRightOf="@id/image_ok"
                 android:layout_alignTop="@id/image_ok"
                 android:gravity="center_vertical"
@@ -57,6 +68,7 @@
             android:layout_below="@id/all_set_group"
             android:layout_marginTop="30dp"
             android:layout_centerHorizontal="true"
+            android:visibility="invisible"
             android:textAppearance="@style/TextAppearance.AppCompat.Body2"
     />
 
@@ -72,6 +84,8 @@
             android:layout_marginTop="5dp"
             android:layout_centerHorizontal="true"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            android:breakStrategy="high_quality"/>
+            android:breakStrategy="high_quality"
+            android:visibility="invisible"
+    />
 
 </RelativeLayout>

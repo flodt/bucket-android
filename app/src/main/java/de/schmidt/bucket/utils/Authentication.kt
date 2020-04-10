@@ -67,7 +67,7 @@ class Authentication {
         }
 
         fun signOut(context: Activity, complete: () -> Unit = {
-            context.runOnUiThread{ Toast.makeText(context, "Signed out", Toast.LENGTH_SHORT).show() }
+            Log.d("Authentication", "Signed out.")
         }) {
             authUI.signOut(context).addOnCompleteListener {
                 //restart main activity after sign-out
@@ -80,7 +80,7 @@ class Authentication {
         }
 
         fun delete(context: Activity, complete: () -> Unit = {
-            context.runOnUiThread{ Toast.makeText(context, "Deleted account", Toast.LENGTH_SHORT).show() }
+            Log.d("Authentication", "Deleted account.")
         }) {
             //verify deletion
             AlertDialog.Builder(context)
