@@ -20,6 +20,8 @@ class AllSetActivity : BaseActivity() {
     private lateinit var infoLabel: TextView
     private lateinit var icon: ImageView
     private lateinit var titleText: TextView
+    private lateinit var handler: Handler
+    private lateinit var refresher: Runnable
 
     override val swipeRefresh: SwipeRefreshLayout?
         get() = findViewById(R.id.pull_to_refresh_all_set)
@@ -39,6 +41,22 @@ class AllSetActivity : BaseActivity() {
             Toast.makeText(this, Authentication.currentUser?.uid, Toast.LENGTH_SHORT).show()
             return@setOnLongClickListener true
         }
+
+        handler = Handler()
+        refresher = Runnable {
+            refreshSilently()
+            handler.postDelayed(refresher, 5_000L)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        handler.post(refresher)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(refresher)
     }
 
     override fun refresh() {
