@@ -50,7 +50,7 @@
                 android:layout_height="wrap_content"
                 android:text="Uploading…"
                 android:textStyle="bold"
-                android:textSize="33dp"
+                android:textSize="33sp"
                 android:textColor="@color/colorPrimaryDarker"
                 android:layout_toRightOf="@id/image_ok"
                 android:layout_alignTop="@id/image_ok"

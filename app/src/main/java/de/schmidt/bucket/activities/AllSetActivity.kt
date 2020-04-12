@@ -11,9 +11,7 @@ import android.widget.Toast
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
 import de.schmidt.bucket.utils.Authentication
-import de.schmidt.bucket.utils.NotificationUtils
 import de.schmidt.bucket.utils.Storage
-import kotlinx.android.synthetic.main.activity_all_set.*
 
 class AllSetActivity : BaseActivity() {
     private lateinit var emailLabel: TextView

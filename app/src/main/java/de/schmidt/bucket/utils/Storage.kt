@@ -2,7 +2,6 @@ package de.schmidt.bucket.utils
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.os.Environment
@@ -12,7 +11,6 @@ import android.view.View
 import android.webkit.MimeTypeMap
 import android.widget.ProgressBar
 import android.widget.Toast
-import androidx.core.net.toFile
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
@@ -32,12 +30,6 @@ class Storage {
             reference.listAll()
                 .addOnSuccessListener { execute(it.items.filterNotNull()) }
                 .addOnFailureListener { Log.e("FirebaseStorage", "An error occurred during file listing.") }
-        }
-
-        fun isBucketEmpty(callback: (Boolean) -> Unit) {
-            listFilesAndThen {
-                callback(it.isEmpty())
-            }
         }
 
         fun downloadFilesAndThen(

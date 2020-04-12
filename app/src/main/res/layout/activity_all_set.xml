@@ -50,7 +50,7 @@
                 android:layout_height="wrap_content"
                 android:text="Sign in…"
                 android:textStyle="bold"
-                android:textSize="35dp"
+                android:textSize="35sp"
                 android:textColor="@color/greyAccent"
                 android:layout_toRightOf="@id/image_ok"
                 android:layout_alignTop="@id/image_ok"
