@@ -40,6 +40,30 @@ class Storage {
             }
         }
 
+        fun downloadFilesAndThen(
+            files: List<StorageReference>,
+            context: Activity,
+            progress: ProgressBar? = null,
+            executeOnLast: (downloaded: File, type: String?) -> Unit
+        ) {
+            files.forEachIndexed { index, ref ->
+                //download each file
+                downloadFileAndThen(ref, context, progress) { downloaded, type ->
+                    Log.d("FirebaseStorage", "Received ${downloaded.absolutePath} with type $type")
+
+                    //update secondary progress bar
+                    val secondary = 100.0 * ((index + 1).toDouble() / (files.size.toDouble()))
+                    progress?.secondaryProgress = secondary.toInt()
+
+                    //if last iteration: trigger callback
+                    if (index == files.size - 1) {
+                        //trigger the callback with the last file info
+                        executeOnLast(downloaded, type)
+                    }
+                }
+            }
+        }
+
         fun downloadFileAndThen(
             storageRef: StorageReference,
             context: Activity,
@@ -51,7 +75,10 @@ class Storage {
             val localFile = downloadDirectory?.createInDirectory(storageRef.name)
             val extension = storageRef.name.substringAfter(".")
 
-            Log.d("FirebaseStorage", "Downloading ${storageRef.name} into ${localFile?.absolutePath} with storage ref extension $extension")
+            Log.d(
+                "FirebaseStorage",
+                "Downloading ${storageRef.name} into ${localFile?.absolutePath} with storage ref extension $extension"
+            )
 
             //check for file creation issues
             if (localFile == null) {
@@ -109,45 +136,67 @@ class Storage {
             }
         }
 
-        fun uploadFileAndThen(uri: Uri, context: Activity, progress: ProgressBar? = null, execute: (StorageReference) -> Unit) {
-            Log.d("FirebaseStorage", "Clearing buckets…")
-            //clear the bucket if it's not empty
-            deleteAllFilesAndThen(context) {
-                Log.d("FirebaseStorage", "Bucket cleared")
+        fun uploadFilesAndThen(
+            uris: ArrayList<Uri?>,
+            context: Activity,
+            progress: ProgressBar? = null,
+            execute: () -> Unit
+        ) {
+            uris.filterNotNull().forEachIndexed { index, uri ->
+                uploadFileAndThen(uri, context, progress) {
+                    //set secondary progress between file uploads
+                    val secondary = 100.0 * ((index + 1).toDouble() / (uris.filterNotNull().size.toDouble()))
+                    progress?.secondaryProgress = secondary.toInt()
 
-                //create reference for the uploaded file
-                val ref = storage
-                    .reference
-                    .child("buckets")
-                    .child(Authentication.currentUser?.uid.toString())
-                    .child(uri.getFileName(context))
-
-                Log.d("FirebaseStorage", "Uploading to reference ${ref.path}")
-
-                //extract input stream
-                val stream = context.contentResolver.openInputStream(uri)
-                stream ?: return@deleteAllFilesAndThen
-                val size = uri.getFileSize(context)
-
-                ref.putStream(stream)
-                    .addOnSuccessListener {
-                        Log.d("FirebaseStorage", "Upload successful")
-                        execute(ref)
+                    //if we're at the last upload, execute the callback
+                    if (index == uris.filterNotNull().size - 1) {
+                        execute()
                     }
-                    .addOnFailureListener {
-                        context.runOnUiThread { Toast.makeText(context, "File upload error!", Toast.LENGTH_SHORT).show() }
-                        Log.e("FirebaseStorage", "File upload error", it)
-                    }
-                    .addOnProgressListener {
-                        if (progress != null) {
-                            //update progress bar if present, set indeterminate if we don't know the size (-1)
-                            progress.isIndeterminate = size == -1L
-                            val current = 100 * ((it.bytesTransferred.toDouble()) / (size.toDouble()))
-                            Log.d("FirebaseStorage", "Progress call ${it.bytesTransferred}/$size bytes, progress $current")
-                            progress.progress = current.toInt()
-                        }
-                    }
+                }
             }
+        }
+
+        fun uploadFileAndThen(
+            uri: Uri,
+            context: Activity,
+            progress: ProgressBar? = null,
+            execute: (StorageReference) -> Unit
+        ) {
+            //clear the bucket if it's not empty
+            Log.d("FirebaseStorage", "Bucket cleared")
+
+            //create reference for the uploaded file
+            val ref = storage
+                .reference
+                .child("buckets")
+                .child(Authentication.currentUser?.uid.toString())
+                .child(uri.getFileName(context))
+
+            Log.d("FirebaseStorage", "Uploading to reference ${ref.path}")
+
+            //extract input stream
+            val stream = context.contentResolver.openInputStream(uri)
+            stream ?: return
+            val size = uri.getFileSize(context)
+
+            ref.putStream(stream)
+                .addOnSuccessListener {
+                    Log.d("FirebaseStorage", "Upload successful")
+                    execute(ref)
+                }
+                .addOnFailureListener {
+                    context.runOnUiThread { Toast.makeText(context, "File upload error!", Toast.LENGTH_SHORT).show() }
+                    Log.e("FirebaseStorage", "File upload error", it)
+                }
+                .addOnProgressListener {
+                    if (progress != null) {
+                        //update progress bar if present, set indeterminate if we don't know the size (-1)
+                        progress.isIndeterminate = size == -1L
+                        val current = 100 * ((it.bytesTransferred.toDouble()) / (size.toDouble()))
+                        Log.d("FirebaseStorage", "Progress call ${it.bytesTransferred}/$size bytes, progress $current")
+                        progress.progress = current.toInt()
+                    }
+                }
         }
 
         fun File.createInDirectory(nameWithExtension: String): File {

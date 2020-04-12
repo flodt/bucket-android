@@ -1,18 +1,16 @@
-package de.schmidt.bucket.utils
+package de.schmidt.bucket.activities
 
 import android.content.Intent
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.net.toFile
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
-import de.schmidt.bucket.activities.BaseActivity
-import de.schmidt.bucket.activities.NewDocumentActivity
+import de.schmidt.bucket.utils.Authentication
+import de.schmidt.bucket.utils.Storage
 
 class UploadActivity : BaseActivity() {
     override val swipeRefresh: SwipeRefreshLayout?
@@ -35,12 +33,30 @@ class UploadActivity : BaseActivity() {
 
             Log.d("UploadActivity", "Uploading URI $uri")
 
-            //upload file (this clears the bucket)
-            Storage.uploadFileAndThen(uri, this, progress) {
-                Toast.makeText(this, "File upload successful", Toast.LENGTH_SHORT).show()
+            //clear the bucket
+            Storage.deleteAllFilesAndThen(this) {
+                //now upload the file
+                Storage.uploadFileAndThen(uri, this, progress) {
+                    Toast.makeText(this, "File upload successful", Toast.LENGTH_SHORT).show()
 
-                //start the new document activity, file was uploaded
-                startActivity(Intent(this, NewDocumentActivity::class.java))
+                    //start the new document activity, file was uploaded
+                    startActivity(Intent(this, NewDocumentActivity::class.java))
+                }
+            }
+        } else if (intent?.action == Intent.ACTION_SEND_MULTIPLE) {
+            //get the list of uris from the intent
+            val uris = intent?.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+            uris ?: return
+
+            Log.d("UploadActivity", "Uploading URIs $uris")
+
+            Storage.deleteAllFilesAndThen(this) {
+                Storage.uploadFilesAndThen(uris, this, progress) {
+                    Toast.makeText(this, "File uploads successful", Toast.LENGTH_SHORT).show()
+
+                    //start the new document activity, file was uploaded
+                    startActivity(Intent(this, NewDocumentActivity::class.java))
+                }
             }
         }
     }

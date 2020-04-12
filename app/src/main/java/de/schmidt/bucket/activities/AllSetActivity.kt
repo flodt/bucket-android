@@ -2,6 +2,7 @@ package de.schmidt.bucket.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
@@ -41,8 +42,12 @@ class AllSetActivity : BaseActivity() {
     }
 
     override fun refresh() {
-        Log.d("NewDocumentActivity", "Refresh triggered…")
         swipeRefresh?.isRefreshing = true
+        refreshSilently()
+    }
+
+    private fun refreshSilently() {
+        Log.d("NewDocumentActivity", "Silent refresh triggered…")
 
         //list files
         Storage.listFilesAndThen { list ->

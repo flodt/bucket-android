@@ -45,12 +45,12 @@
         />
 
         <TextView
-                android:id="@+id/all_set_textview"
+                android:id="@+id/pending_documents_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pending document"
+                android:text="8 pending documents"
                 android:textStyle="bold"
-                android:textSize="33dp"
+                android:textSize="25dp"
                 android:textColor="@color/colorPrimaryDarker"
                 android:layout_toRightOf="@id/image_ok"
                 android:layout_alignTop="@id/image_ok"

@@ -82,23 +82,33 @@ class Authentication {
         fun delete(context: Activity, complete: () -> Unit = {
             Log.d("Authentication", "Deleted account.")
         }) {
-            //verify deletion
-            AlertDialog.Builder(context)
-                .setTitle("Delete account?")
-                .setMessage("Do you really wish to delete your account?")
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Yes") { _, _ ->
-                    authUI.delete(context).addOnCompleteListener {
-                        //restart main activity after sign-out
-                        context.finish()
-                        context.startActivity(Intent(context, AllSetActivity::class.java))
-
-                        //call the passed listener
-                        complete()
+            //do not delete when bucket is full
+            Storage.listFilesAndThen {
+                if (it.isNotEmpty()) {
+                    context.runOnUiThread {
+                        Toast.makeText(context, "Cannot delete account! Bucket must be empty.", Toast.LENGTH_SHORT)
+                            .show()
                     }
+                } else {
+                    //verify deletion
+                    AlertDialog.Builder(context)
+                        .setTitle("Delete account?")
+                        .setMessage("Do you really wish to delete your account?")
+                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Yes") { _, _ ->
+                            authUI.delete(context).addOnCompleteListener {
+                                //restart main activity after sign-out
+                                context.finish()
+                                context.startActivity(Intent(context, AllSetActivity::class.java))
+
+                                //call the passed listener
+                                complete()
+                            }
+                        }
+                        .create()
+                        .show()
                 }
-                .create()
-                .show()
+            }
         }
 
         fun setOnStateChangeListener(onStateChange: (FirebaseAuth) -> Unit) {

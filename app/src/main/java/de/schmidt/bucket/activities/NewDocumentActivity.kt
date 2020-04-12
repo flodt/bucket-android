@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -23,6 +24,7 @@ import de.schmidt.bucket.utils.Storage
 
 class NewDocumentActivity : BaseActivity() {
     private lateinit var emailLabel: TextView
+    private lateinit var pendingDocuments: TextView
     private lateinit var downloadButton: Button
     private lateinit var clearButton: Button
     private lateinit var progressBar: ProgressBar
@@ -38,6 +40,7 @@ class NewDocumentActivity : BaseActivity() {
         downloadButton = findViewById(R.id.download_button)
         clearButton = findViewById(R.id.clear_button)
         progressBar = findViewById(R.id.download_progress_bar)
+        pendingDocuments = findViewById(R.id.pending_documents_textview)
 
         clearButton.setOnClickListener {
             Storage.deleteAllFilesAndThen(this) {
@@ -55,13 +58,7 @@ class NewDocumentActivity : BaseActivity() {
 
             //initiate download of the first file in the list
             Storage.listFilesAndThen { list ->
-                //get first references
-                val first = list[0]
-
-                //start download
-                Storage.downloadFileAndThen(first, this, progressBar) { file, type ->
-                    Log.d("FirebaseStorage", "Received ${file.absolutePath} with type $type")
-
+                Storage.downloadFilesAndThen(list, this, progressBar) { downloaded, type ->
                     //send notification to open the downloaded file
                     //open the downloaded file
                     Intent().apply {
@@ -69,40 +66,33 @@ class NewDocumentActivity : BaseActivity() {
                         data = FileProvider.getUriForFile(
                             this@NewDocumentActivity,
                             applicationContext.packageName + ".provider",
-                            file)
+                            downloaded)
                         action = Intent.ACTION_VIEW
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
                     }.let {
-                        /*try {
-                            startActivity(it)
-                        } catch (e: ActivityNotFoundException) {
-                            Toast.makeText(this, "There's no program to open this file", Toast.LENGTH_LONG).show()
-                        }*/
-
                         //pass to notification
+                        val title = "${list.size} file(s) downloaded"
+                        val description = "${downloaded.name} and ${list.size - 1} others…"
                         NotificationUtils.fireDownloadedNotification(
-                            this, "File downloaded", file.name, it
+                            this, title, description, it
                         )
-                    }
 
-                    //delete the downloaded file from the bucket
-                    Storage.deleteFileAndThen(first, this) {
+                        //reset view
                         downloading = false
                         progressBar.visibility = View.INVISIBLE
-                        refresh()
                     }
-                    //downloading = false
-                    //progressBar.visibility = View.INVISIBLE
                 }
-
             }
         }
     }
 
     override fun refresh() {
-        Log.d("NewDocumentActivity", "Refresh triggered…")
         swipeRefresh?.isRefreshing = true
+        refreshSilently()
+    }
 
+    private fun refreshSilently() {
+        Log.d("NewDocumentActivity", "Silent refresh triggered…")
         //if we don't have any files in the bucket anymore, go back to the all set activity
         Storage.listFilesAndThen {
             if (it.isEmpty()) {
@@ -117,6 +107,11 @@ class NewDocumentActivity : BaseActivity() {
     override fun updateUI() {
         runOnUiThread {
             emailLabel.text = "Signed in as ${Authentication.currentUser?.email}"
+        }
+
+        //set the number of pending documents
+        Storage.listFilesAndThen {
+            runOnUiThread { pendingDocuments.text = "${it.size} pending documents" }
         }
     }
 }
