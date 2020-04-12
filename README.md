@@ -8,7 +8,8 @@
 
 > Bucket is a fast and easy way to transport files between your mobile device and your computer. No more e-mailing files back and forth but simple and easy uploading and downloading on either side!
 
-### ✨ [Soon on Google Play](https://play.google.com/)
+### ✨ [View the web client](https://bucket.schmidt-allgaeu.de)
+### ✨ [See screenshots](https://schmidt-allgaeu.de)
 
 ## Author
 
