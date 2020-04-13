@@ -167,28 +167,33 @@ class Storage {
             Log.d("FirebaseStorage", "Uploading to reference ${ref.path}")
 
             //extract input stream
-            val stream = context.contentResolver.openInputStream(uri)
-            stream ?: return
-            val size = uri.getFileSize(context)
+            context.contentResolver.openInputStream(uri)?.let { stream ->
+                val size = uri.getFileSize(context)
 
-            ref.putStream(stream)
-                .addOnSuccessListener {
-                    Log.d("FirebaseStorage", "Upload successful")
-                    execute(ref)
-                }
-                .addOnFailureListener {
-                    context.runOnUiThread { Toast.makeText(context, "File upload error!", Toast.LENGTH_SHORT).show() }
-                    Log.e("FirebaseStorage", "File upload error", it)
-                }
-                .addOnProgressListener {
-                    if (progress != null) {
-                        //update progress bar if present, set indeterminate if we don't know the size (-1)
-                        progress.isIndeterminate = size == -1L
-                        val current = 100 * ((it.bytesTransferred.toDouble()) / (size.toDouble()))
-                        Log.d("FirebaseStorage", "Progress call ${it.bytesTransferred}/$size bytes, progress $current")
-                        progress.progress = current.toInt()
+                ref.putStream(stream)
+                    .addOnSuccessListener {
+                        Log.d("FirebaseStorage", "Upload successful")
+                        execute(ref)
                     }
-                }
+                    .addOnFailureListener {
+                        context.runOnUiThread {
+                            Toast.makeText(context, "File upload error!", Toast.LENGTH_SHORT).show()
+                        }
+                        Log.e("FirebaseStorage", "File upload error", it)
+                    }
+                    .addOnProgressListener {
+                        progress?.apply {
+                            //update progress bar if present, set indeterminate if we don't know the size (-1)
+                            isIndeterminate = size == -1L
+                            val current = 100 * ((it.bytesTransferred.toDouble()) / (size.toDouble()))
+                            Log.d(
+                                "FirebaseStorage",
+                                "Progress call ${it.bytesTransferred}/$size bytes, progress $current"
+                            )
+                            setProgress(current.toInt())
+                        }
+                    }
+            }
         }
 
         fun File.createInDirectory(nameWithExtension: String): File {
@@ -217,15 +222,14 @@ class Storage {
 
             //try the nice way
             if (scheme == "content") {
-                val cursor: Cursor? = context.contentResolver.query(this, null, null, null, null)
-
-                try {
-                    if (cursor != null && cursor.moveToFirst()) {
-                        result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                context
+                    .contentResolver
+                    .query(this, null, null, null, null)
+                    ?.use {
+                        if (it.moveToFirst()) {
+                            result = it.getString(it.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                        }
                     }
-                } finally {
-                    cursor?.close()
-                }
             }
 
             //else we extract manually
