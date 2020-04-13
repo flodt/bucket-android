@@ -26,7 +26,8 @@ class NotificationUtils {
                 channel.description = description
 
                 //register channel
-                val manager: NotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val manager: NotificationManager =
+                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.createNotificationChannel(channel)
             }
         }
