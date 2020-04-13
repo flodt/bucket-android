@@ -25,20 +25,20 @@ class Authentication {
 
         fun initiateSignIn(context: Activity) {
             //we want google and e-mail as sign in methods
-            val providers = arrayListOf(
+            arrayListOf(
                 AuthUI.IdpConfig.GoogleBuilder().build(),
                 AuthUI.IdpConfig.EmailBuilder().build()
-            )
-
-            //launch sign-in
-            context.startActivityForResult(
-                authUI
-                    .createSignInIntentBuilder()
-                    .setLogo(R.mipmap.ic_launcher)
-                    .setAvailableProviders(providers)
-                    .build(),
-                signInRequestCode
-            )
+            ).let { providers ->
+                //launch sign-in
+                context.startActivityForResult(
+                    authUI
+                        .createSignInIntentBuilder()
+                        .setLogo(R.mipmap.ic_launcher)
+                        .setAvailableProviders(providers)
+                        .build(),
+                    signInRequestCode
+                )
+            }
         }
 
         fun handleOnActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -51,8 +51,7 @@ class Authentication {
                 } else {
                     Log.e("SignIn", "Not successful")
                     //sign in was not successful, error code?
-                    val response = IdpResponse.fromResultIntent(data)
-                    errorCallback?.invoke(response)
+                    IdpResponse.fromResultIntent(data).let { errorCallback?.invoke(it) }
                 }
             }
         }

@@ -28,34 +28,32 @@ class UploadActivity : BaseActivity() {
         //extract the file that was shared to this activity
         if (intent?.action == Intent.ACTION_SEND) {
             //get the data stream bundle
-            val uri: Uri? = intent?.getParcelableExtra(Intent.EXTRA_STREAM)
-            uri ?: return
+            intent?.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { uri ->
+                Log.d("UploadActivity", "Uploading URI $uri")
 
-            Log.d("UploadActivity", "Uploading URI $uri")
+                //clear the bucket
+                Storage.deleteAllFilesAndThen(this) {
+                    //now upload the file
+                    Storage.uploadFileAndThen(uri, this, progress) {
+                        Toast.makeText(this, "File upload successful", Toast.LENGTH_SHORT).show()
 
-            //clear the bucket
-            Storage.deleteAllFilesAndThen(this) {
-                //now upload the file
-                Storage.uploadFileAndThen(uri, this, progress) {
-                    Toast.makeText(this, "File upload successful", Toast.LENGTH_SHORT).show()
-
-                    //start the new document activity, file was uploaded
-                    startActivity(Intent(this, NewDocumentActivity::class.java))
+                        //start the new document activity, file was uploaded
+                        startActivity(Intent(this, NewDocumentActivity::class.java))
+                    }
                 }
             }
         } else if (intent?.action == Intent.ACTION_SEND_MULTIPLE) {
             //get the list of uris from the intent
-            val uris = intent?.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
-            uris ?: return
+            intent?.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.let { uris ->
+                Log.d("UploadActivity", "Uploading URIs $uris")
 
-            Log.d("UploadActivity", "Uploading URIs $uris")
+                Storage.deleteAllFilesAndThen(this) {
+                    Storage.uploadFilesAndThen(uris, this, progress) {
+                        Toast.makeText(this, "File uploads successful", Toast.LENGTH_SHORT).show()
 
-            Storage.deleteAllFilesAndThen(this) {
-                Storage.uploadFilesAndThen(uris, this, progress) {
-                    Toast.makeText(this, "File uploads successful", Toast.LENGTH_SHORT).show()
-
-                    //start the new document activity, file was uploaded
-                    startActivity(Intent(this, NewDocumentActivity::class.java))
+                        //start the new document activity, file was uploaded
+                        startActivity(Intent(this, NewDocumentActivity::class.java))
+                    }
                 }
             }
         }

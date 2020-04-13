@@ -40,20 +40,22 @@ class NotificationUtils {
             )
 
             //construct notification
-            val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setContentTitle(title)
-                .setContentText(description)
-                .setSmallIcon(R.drawable.ic_file_download)
-                .setChannelId(CHANNEL_ID)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setLargeIcon(DrawableUtils.generateBitmap(context, R.mipmap.ic_launcher))
-                .setColor(context.getColor(R.color.colorPrimary))
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
-
-            //fire notification
-            val manager = NotificationManagerCompat.from(context)
-            manager.notify(System.currentTimeMillis().toInt(), builder.build())
+            NotificationCompat.Builder(context, CHANNEL_ID).apply {
+                setContentTitle(title)
+                setContentText(description)
+                setSmallIcon(R.drawable.ic_file_download)
+                setChannelId(CHANNEL_ID)
+                priority = NotificationCompat.PRIORITY_HIGH
+                setLargeIcon(DrawableUtils.generateBitmap(context, R.mipmap.ic_launcher))
+                color = context.getColor(R.color.colorPrimary)
+                setContentIntent(pendingIntent)
+                setAutoCancel(true)
+            }.let { builder ->
+                //fire notification
+                with(NotificationManagerCompat.from(context)) {
+                    notify(System.currentTimeMillis().toInt(), builder.build())
+                }
+            }
         }
     }
 }
