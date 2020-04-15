@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.View
 import android.webkit.MimeTypeMap
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
@@ -32,25 +33,39 @@ class Storage {
                 .addOnFailureListener { Log.e("FirebaseStorage", "An error occurred during file listing.") }
         }
 
+        @SuppressLint("SetTextI18n")
         fun downloadFilesAndThen(
             files: List<StorageReference>,
             context: Activity,
             progress: ProgressBar? = null,
+            fileOfFiles: TextView? = null,
             executeOnLast: (downloaded: File, type: String?) -> Unit
         ) {
-            files.forEachIndexed { index, ref ->
+            //set initial progress
+            fileOfFiles?.visibility = View.VISIBLE
+            fileOfFiles?.text = "0/${files.size}"
+
+            var count = 0
+
+            files.forEach { ref ->
                 //download each file
                 downloadFileAndThen(ref, context, progress) { downloaded, type ->
                     Log.d("FirebaseStorage", "Received ${downloaded.absolutePath} with type $type")
 
-                    //update secondary progress bar
-                    val secondary = 100.0 * ((index + 1).toDouble() / (files.size.toDouble()))
-                    progress?.secondaryProgress = secondary.toInt()
+                    //increment counter after success
+                    synchronized(count) {
+                        count++
 
-                    //if last iteration: trigger callback
-                    if (index == files.size - 1) {
-                        //trigger the callback with the last file info
-                        executeOnLast(downloaded, type)
+                        //update secondary progress bar
+                        fileOfFiles?.text = "${count}/${files.size}"
+                        val secondary = 100.0 * (count.toDouble() / (files.size.toDouble()))
+                        progress?.secondaryProgress = secondary.toInt()
+
+                        //if last iteration: trigger callback
+                        if (count == files.size) {
+                            //trigger the callback with the last file info
+                            executeOnLast(downloaded, type)
+                        }
                     }
                 }
             }
@@ -91,11 +106,15 @@ class Storage {
                     )
                 }
                 .addOnProgressListener {
-                    if (progress != null) {
+                    progress?.let { progress ->
                         //update progress bar if present
-                        val current = 100 * ((it.bytesTransferred.toDouble()) / (it.totalByteCount.toDouble()))
-                        progress.visibility = View.VISIBLE
-                        progress.progress = current.toInt()
+                        context.runOnUiThread {
+                            val current = 100 * ((it.bytesTransferred.toDouble()) / (it.totalByteCount.toDouble()))
+                            context.runOnUiThread {
+                                progress.visibility = View.VISIBLE
+                                progress.progress = current.toInt()
+                            }
+                        }
                     }
                 }
                 .addOnFailureListener {
@@ -128,21 +147,34 @@ class Storage {
             }
         }
 
+        @SuppressLint("SetTextI18n")
         fun uploadFilesAndThen(
             uris: ArrayList<Uri?>,
             context: Activity,
             progress: ProgressBar? = null,
+            fileOfFiles: TextView? = null,
             execute: () -> Unit
         ) {
-            uris.filterNotNull().forEachIndexed { index, uri ->
-                uploadFileAndThen(uri, context, progress) {
-                    //set secondary progress between file uploads
-                    val secondary = 100.0 * ((index + 1).toDouble() / (uris.filterNotNull().size.toDouble()))
-                    progress?.secondaryProgress = secondary.toInt()
+            fileOfFiles?.text = "0/${uris.filterNotNull().size}"
+            fileOfFiles?.visibility = View.VISIBLE
 
-                    //if we're at the last upload, execute the callback
-                    if (index == uris.filterNotNull().size - 1) {
-                        execute()
+            var count = 0
+
+            uris.filterNotNull().forEach { uri ->
+                uploadFileAndThen(uri, context, progress) {
+                    synchronized(count) {
+                        //increment counter
+                        count++
+
+                        //set secondary progress between file uploads
+                        fileOfFiles?.text = "${count}/${uris.filterNotNull().size}"
+                        val secondary = 100.0 * (count.toDouble() / (uris.filterNotNull().size.toDouble()))
+                        progress?.secondaryProgress = secondary.toInt()
+
+                        //if we're at the last upload, execute the callback
+                        if (count == uris.filterNotNull().size) {
+                            execute()
+                        }
                     }
                 }
             }

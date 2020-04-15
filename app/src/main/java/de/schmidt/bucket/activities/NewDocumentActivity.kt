@@ -20,6 +20,7 @@ class NewDocumentActivity : BaseActivity() {
     private lateinit var downloadButton: Button
     private lateinit var clearButton: Button
     private lateinit var progressBar: ProgressBar
+    private lateinit var fileOfFiles: TextView
     override val swipeRefresh: SwipeRefreshLayout?
         get() = findViewById(R.id.pull_to_refresh_new_document)
     private var downloading = false
@@ -32,6 +33,7 @@ class NewDocumentActivity : BaseActivity() {
         downloadButton = findViewById(R.id.download_button)
         clearButton = findViewById(R.id.clear_button)
         progressBar = findViewById(R.id.download_progress_bar)
+        fileOfFiles = findViewById(R.id.download_progress_info)
         pendingDocuments = findViewById(R.id.pending_documents_textview)
 
         clearButton.setOnClickListener {
@@ -50,7 +52,7 @@ class NewDocumentActivity : BaseActivity() {
 
             //initiate download of the first file in the list
             Storage.listFilesAndThen { list ->
-                Storage.downloadFilesAndThen(list, this, progressBar) { downloaded, type ->
+                Storage.downloadFilesAndThen(list, this, progressBar, fileOfFiles) { downloaded, type ->
                     //send notification to open the downloaded file
                     //open the downloaded file
                     Intent().apply {
@@ -72,6 +74,7 @@ class NewDocumentActivity : BaseActivity() {
                         //reset view
                         downloading = false
                         progressBar.visibility = View.INVISIBLE
+                        fileOfFiles.visibility = View.INVISIBLE
                     }
                 }
             }

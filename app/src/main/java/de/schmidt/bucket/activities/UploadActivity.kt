@@ -16,6 +16,7 @@ class UploadActivity : BaseActivity() {
     override val swipeRefresh: SwipeRefreshLayout?
         get() = findViewById(R.id.pull_to_refresh_upload)
     private lateinit var progress: ProgressBar
+    private lateinit var fileOfFiles: TextView
     private lateinit var info: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,6 +25,7 @@ class UploadActivity : BaseActivity() {
 
         progress = findViewById(R.id.upload_progress_bar)
         info = findViewById(R.id.signed_in_info_upload)
+        fileOfFiles = findViewById(R.id.upload_progress_info)
 
         //extract the file that was shared to this activity
         if (intent?.action == Intent.ACTION_SEND) {
@@ -48,10 +50,11 @@ class UploadActivity : BaseActivity() {
                 Log.d("UploadActivity", "Uploading URIs $uris")
 
                 Storage.deleteAllFilesAndThen(this) {
-                    Storage.uploadFilesAndThen(uris, this, progress) {
+                    Storage.uploadFilesAndThen(uris, this, progress, fileOfFiles) {
                         Toast.makeText(this, "File uploads successful", Toast.LENGTH_SHORT).show()
 
                         //start the new document activity, file was uploaded
+                        finish()
                         startActivity(Intent(this, NewDocumentActivity::class.java))
                     }
                 }
