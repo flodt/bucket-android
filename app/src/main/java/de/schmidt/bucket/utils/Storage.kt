@@ -233,8 +233,11 @@ class Storage {
         }
 
         fun File.createSubdirectory(name: String): File {
-            return File(this, name)
-                .also { mkdirs() }
+            File(this, name)
+                .let {
+                    it.mkdirs()
+                    return it
+                }
         }
 
         fun File.createInDirectory(nameWithExtension: String): File {
