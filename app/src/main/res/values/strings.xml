@@ -2,4 +2,5 @@
     <string name="app_name">Bucket</string>
     <string name="channel_name">Bucket</string>
     <string name="channel_description">Upload and download notifications</string>
+    <string name="downloads_directory_name">Bucket</string>
 </resources>

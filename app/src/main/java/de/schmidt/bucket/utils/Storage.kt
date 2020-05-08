@@ -15,6 +15,7 @@ import android.widget.Toast
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
+import de.schmidt.bucket.R
 import java.io.File
 
 class Storage {
@@ -78,8 +79,11 @@ class Storage {
             execute: (downloaded: File, type: String?) -> Unit
         ) {
             //create a file in the downloads folder for the download
-            val downloadDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val localFile = downloadDirectory?.createInDirectory(storageRef.name)
+            val downloadDirectory = Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                .createSubdirectory(context.getString(R.string.downloads_directory_name))
+
+            val localFile = downloadDirectory.createInDirectory(storageRef.name)
             val extension = storageRef.name.substringAfter(".")
 
             Log.d(
@@ -226,6 +230,11 @@ class Storage {
                         }
                     }
             }
+        }
+
+        fun File.createSubdirectory(name: String): File {
+            return File(this, name)
+                .also { mkdirs() }
         }
 
         fun File.createInDirectory(nameWithExtension: String): File {
