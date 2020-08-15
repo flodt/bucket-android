@@ -7,4 +7,6 @@
     <color name="white">#ffffff</color>
     <color name="greenAccent">#C7D133</color>
     <color name="greyAccent">#9E9E9E</color>
+    <color name="action_bar_dark">#212121</color>
+    <color name="status_bar_dark">#151515</color>
 </resources>

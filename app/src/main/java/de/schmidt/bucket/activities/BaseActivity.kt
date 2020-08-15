@@ -3,6 +3,7 @@ package de.schmidt.bucket.activities
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.util.Log
@@ -14,9 +15,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import de.schmidt.bucket.R
 import de.schmidt.bucket.utils.Authentication
 import de.schmidt.bucket.utils.MenuUtils
 import de.schmidt.bucket.utils.NotificationUtils
+import de.schmidt.bucket.utils.ThemeUtils
 
 abstract class BaseActivity: AppCompatActivity() {
     private val STORAGE_PERMISSION_REQUEST: Int = 0xFF0F
@@ -53,6 +56,13 @@ abstract class BaseActivity: AppCompatActivity() {
 
         //add refresh trigger to swipeRefreshLayout
         swipeRefresh?.setOnRefreshListener { refresh() }
+
+        //setup dark theme action bar
+        if (ThemeUtils.isInDarkMode(this)) {
+            Log.d("ThemeUtils", "is in dark mode!")
+            supportActionBar?.setBackgroundDrawable(ColorDrawable(resources.getColor(R.color.action_bar_dark)))
+            window?.statusBarColor = resources.getColor(R.color.status_bar_dark)
+        }
 
         refresh()
         updateUI()
