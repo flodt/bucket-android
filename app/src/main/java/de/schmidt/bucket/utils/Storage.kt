@@ -2,14 +2,12 @@ package de.schmidt.bucket.utils
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.database.Cursor
 import android.net.Uri
 import android.os.Environment
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.View
 import android.webkit.MimeTypeMap
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import com.google.firebase.ktx.Firebase
@@ -38,7 +36,7 @@ class Storage {
         fun downloadFilesAndThen(
             files: List<StorageReference>,
             context: Activity,
-            progress: ProgressBar? = null,
+            progressMgr: ProgressManager<StorageReference>? = null,
             fileOfFiles: TextView? = null,
             executeOnLast: (downloaded: File, type: String?) -> Unit
         ) {
@@ -50,7 +48,7 @@ class Storage {
 
             files.forEach { ref ->
                 //download each file
-                downloadFileAndThen(ref, context, progress) { downloaded, type ->
+                downloadFileAndThen(ref, context, progressMgr) { downloaded, type ->
                     Log.d("FirebaseStorage", "Received ${downloaded.absolutePath} with type $type")
 
                     //increment counter after success
@@ -59,8 +57,7 @@ class Storage {
 
                         //update secondary progress bar
                         fileOfFiles?.text = "${count}/${files.size}"
-                        val secondary = 100.0 * (count.toDouble() / (files.size.toDouble()))
-                        progress?.secondaryProgress = secondary.toInt()
+                        progressMgr?.update(ref, 100)
 
                         //if last iteration: trigger callback
                         if (count == files.size) {
@@ -75,7 +72,7 @@ class Storage {
         fun downloadFileAndThen(
             storageRef: StorageReference,
             context: Activity,
-            progress: ProgressBar? = null,
+            progressMgr: ProgressManager<StorageReference>? = null,
             execute: (downloaded: File, type: String?) -> Unit
         ) {
             //create a file in the downloads folder for the download
@@ -88,14 +85,8 @@ class Storage {
 
             Log.d(
                 "FirebaseStorage",
-                "Downloading ${storageRef.name} into ${localFile?.absolutePath} with storage ref extension $extension"
+                "Downloading ${storageRef.name} into ${localFile.absolutePath} with storage ref extension $extension"
             )
-
-            //check for file creation issues
-            if (localFile == null) {
-                context.runOnUiThread { Toast.makeText(context, "Error in storage access!", Toast.LENGTH_SHORT).show() }
-                return
-            }
 
             //initiate download
             storageRef
@@ -110,16 +101,9 @@ class Storage {
                     )
                 }
                 .addOnProgressListener {
-                    progress?.let { progress ->
-                        //update progress bar if present
-                        context.runOnUiThread {
-                            val current = 100 * ((it.bytesTransferred.toDouble()) / (it.totalByteCount.toDouble()))
-                            context.runOnUiThread {
-                                progress.visibility = View.VISIBLE
-                                progress.progress = current.toInt()
-                            }
-                        }
-                    }
+                    progressMgr?.update(it.storage,
+                        (100 * ((it.bytesTransferred.toDouble()) / (it.totalByteCount.toDouble()))).toInt()
+                    )
                 }
                 .addOnFailureListener {
                     context.runOnUiThread { Toast.makeText(context, "Download error!", Toast.LENGTH_SHORT).show() }
@@ -155,7 +139,7 @@ class Storage {
         fun uploadFilesAndThen(
             uris: ArrayList<Uri?>,
             context: Activity,
-            progress: ProgressBar? = null,
+            progressMgr: ProgressManager<Uri>? = null,
             fileOfFiles: TextView? = null,
             execute: () -> Unit
         ) {
@@ -165,15 +149,14 @@ class Storage {
             var count = 0
 
             uris.filterNotNull().forEach { uri ->
-                uploadFileAndThen(uri, context, progress) {
+                uploadFileAndThen(uri, context, progressMgr) {
                     synchronized(count) {
                         //increment counter
                         count++
 
                         //set secondary progress between file uploads
                         fileOfFiles?.text = "${count}/${uris.filterNotNull().size}"
-                        val secondary = 100.0 * (count.toDouble() / (uris.filterNotNull().size.toDouble()))
-                        progress?.secondaryProgress = secondary.toInt()
+                        progressMgr?.update(uri, 100)
 
                         //if we're at the last upload, execute the callback
                         if (count == uris.filterNotNull().size) {
@@ -187,7 +170,7 @@ class Storage {
         fun uploadFileAndThen(
             uri: Uri,
             context: Activity,
-            progress: ProgressBar? = null,
+            progressMgr: ProgressManager<Uri>? = null,
             execute: (StorageReference) -> Unit
         ) {
             //clear the bucket if it's not empty
@@ -218,16 +201,8 @@ class Storage {
                         Log.e("FirebaseStorage", "File upload error", it)
                     }
                     .addOnProgressListener {
-                        progress?.apply {
-                            //update progress bar if present, set indeterminate if we don't know the size (-1)
-                            isIndeterminate = size == -1L
-                            val current = 100 * ((it.bytesTransferred.toDouble()) / (size.toDouble()))
-                            Log.d(
-                                "FirebaseStorage",
-                                "Progress call ${it.bytesTransferred}/$size bytes, progress $current"
-                            )
-                            setProgress(current.toInt())
-                        }
+                        progressMgr?.setIndeterminate(size == -1L)
+                        progressMgr?.update(uri, 100 * ((it.bytesTransferred.toDouble()) / (size.toDouble())).toInt())
                     }
             }
         }

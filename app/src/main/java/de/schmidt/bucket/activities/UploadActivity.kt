@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
 import de.schmidt.bucket.utils.Authentication
+import de.schmidt.bucket.utils.ProgressManager
 import de.schmidt.bucket.utils.Storage
 
 class UploadActivity : BaseActivity() {
@@ -36,7 +37,8 @@ class UploadActivity : BaseActivity() {
                 //clear the bucket
                 Storage.deleteAllFilesAndThen(this) {
                     //now upload the file
-                    Storage.uploadFileAndThen(uri, this, progress) {
+                    val progressMgr = ProgressManager(listOf(uri), this, progress)
+                    Storage.uploadFileAndThen(uri, this, progressMgr) {
                         Toast.makeText(this, "File upload successful", Toast.LENGTH_SHORT).show()
 
                         //start the new document activity, file was uploaded
@@ -50,7 +52,8 @@ class UploadActivity : BaseActivity() {
                 Log.d("UploadActivity", "Uploading URIs $uris")
 
                 Storage.deleteAllFilesAndThen(this) {
-                    Storage.uploadFilesAndThen(uris, this, progress, fileOfFiles) {
+                    val progressMgr = ProgressManager(uris.filterNotNull(), this, progress)
+                    Storage.uploadFilesAndThen(uris, this, progressMgr, fileOfFiles) {
                         Toast.makeText(this, "File uploads successful", Toast.LENGTH_SHORT).show()
 
                         //start the new document activity, file was uploaded

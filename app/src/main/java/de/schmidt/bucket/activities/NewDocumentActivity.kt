@@ -12,6 +12,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
 import de.schmidt.bucket.utils.Authentication
 import de.schmidt.bucket.utils.NotificationUtils
+import de.schmidt.bucket.utils.ProgressManager
 import de.schmidt.bucket.utils.Storage
 
 class NewDocumentActivity : BaseActivity() {
@@ -52,7 +53,8 @@ class NewDocumentActivity : BaseActivity() {
 
             //initiate download of the first file in the list
             Storage.listFilesAndThen { list ->
-                Storage.downloadFilesAndThen(list, this, progressBar, fileOfFiles) { downloaded, type ->
+                val progressMgr = ProgressManager(list, this, progressBar)
+                Storage.downloadFilesAndThen(list, this, progressMgr, fileOfFiles) { downloaded, type ->
                     //send notification to open the downloaded file
                     //open the downloaded file
                     Intent().apply {
