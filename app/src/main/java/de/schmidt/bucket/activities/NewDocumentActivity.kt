@@ -65,8 +65,8 @@ class NewDocumentActivity : BaseActivity() {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
                     }.let {
                         //pass to notification
-                        val title = "${list.size} file(s) downloaded"
-                        val description = "${downloaded.name} and ${list.size - 1} others…"
+                        val title = "${list.size} file" + (if (list.size > 1) "s" else "") + " downloaded"
+                        val description = downloaded.name + (if (list.size > 1) " and ${list.size - 1} others…" else "")
                         NotificationUtils.fireDownloadedNotification(
                             this, title, description, it
                         )
