@@ -36,6 +36,7 @@ class UploadActivity : BaseActivity() {
                 //get the data stream bundle
                 intent?.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { uri ->
                     Log.d("UploadActivity", "Uploading URI $uri")
+                    Toast.makeText(this, "Uploading file...", Toast.LENGTH_SHORT).show()
 
                     //clear the bucket
                     Storage.deleteAllFilesAndThen(this) {
@@ -54,9 +55,13 @@ class UploadActivity : BaseActivity() {
                 val receivedText = intent?.getStringExtra(Intent.EXTRA_TEXT) ?: ""
 
                 if (URLUtil.isValidUrl(receivedText)) {
+                    Toast.makeText(this, "Submitting URL...", Toast.LENGTH_SHORT).show()
                     Log.d("UploadActivity", "Discovered and uploading URL $receivedText...")
                     Database.submitURL(receivedText) {
+                        Toast.makeText(this, "URL submission successful", Toast.LENGTH_SHORT).show()
+
                         //start the new document activity, URL was set
+                        finish()
                         startActivity(Intent(this, NewDocumentActivity::class.java))
                     }
                 } else {
