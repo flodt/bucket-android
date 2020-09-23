@@ -4,12 +4,14 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.webkit.URLUtil
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
 import de.schmidt.bucket.utils.Authentication
+import de.schmidt.bucket.utils.Database
 import de.schmidt.bucket.utils.ProgressManager
 import de.schmidt.bucket.utils.Storage
 
@@ -30,21 +32,40 @@ class UploadActivity : BaseActivity() {
 
         //extract the file that was shared to this activity
         if (intent?.action == Intent.ACTION_SEND) {
-            //get the data stream bundle
-            intent?.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { uri ->
-                Log.d("UploadActivity", "Uploading URI $uri")
+            if (intent?.hasExtra(Intent.EXTRA_STREAM) == true) {
+                //get the data stream bundle
+                intent?.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { uri ->
+                    Log.d("UploadActivity", "Uploading URI $uri")
 
-                //clear the bucket
-                Storage.deleteAllFilesAndThen(this) {
-                    //now upload the file
-                    val progressMgr = ProgressManager(listOf(uri), this, progress)
-                    Storage.uploadFileAndThen(uri, this, progressMgr) {
-                        Toast.makeText(this, "File upload successful", Toast.LENGTH_SHORT).show()
+                    //clear the bucket
+                    Storage.deleteAllFilesAndThen(this) {
+                        //now upload the file
+                        val progressMgr = ProgressManager(listOf(uri), this, progress)
+                        Storage.uploadFileAndThen(uri, this, progressMgr) {
+                            Toast.makeText(this, "File upload successful", Toast.LENGTH_SHORT).show()
 
-                        //start the new document activity, file was uploaded
-                        startActivity(Intent(this, NewDocumentActivity::class.java))
+                            //start the new document activity, file was uploaded
+                            startActivity(Intent(this, NewDocumentActivity::class.java))
+                        }
                     }
                 }
+            } else if (intent?.hasExtra(Intent.EXTRA_TEXT) == true) {
+                //no data stream, maybe we have text?
+                val receivedText = intent?.getStringExtra(Intent.EXTRA_TEXT) ?: ""
+
+                if (URLUtil.isValidUrl(receivedText)) {
+                    Log.d("UploadActivity", "Discovered and uploading URL $receivedText...")
+                    Database.submitURL(receivedText) {
+                        //start the new document activity, URL was set
+                        startActivity(Intent(this, NewDocumentActivity::class.java))
+                    }
+                } else {
+                    //unable to handle this
+                    finish()
+                }
+            } else {
+                //also unable to handle this
+                finish()
             }
         } else if (intent?.action == Intent.ACTION_SEND_MULTIPLE) {
             //get the list of uris from the intent

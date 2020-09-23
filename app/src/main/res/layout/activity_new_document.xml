@@ -48,7 +48,7 @@
                 android:id="@+id/pending_documents_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="8 pending documents"
+                android:text="@string/text_pending_content"
                 android:textStyle="bold"
                 android:textSize="25sp"
                 android:textColor="@color/colorPrimaryDarker"
@@ -75,13 +75,27 @@
             android:id="@+id/download_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Download"
+            android:text="Download…"
             android:textColor="@color/white"
             android:backgroundTint="@color/colorAccent"
             android:layout_marginTop="30dp"
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp"
+            android:visibility="visible"
             android:layout_below="@id/signed_in_info_newdocument"
+    />
+
+    <Button
+            android:id="@+id/open_url_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Open URL…"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/colorAccent"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:visibility="visible"
+            android:layout_below="@id/download_button"
     />
 
     <Button
@@ -93,7 +107,7 @@
             android:backgroundTint="@color/greyAccent"
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp"
-            android:layout_below="@id/download_button"
+            android:layout_below="@id/open_url_button"
     />
 
     <ProgressBar

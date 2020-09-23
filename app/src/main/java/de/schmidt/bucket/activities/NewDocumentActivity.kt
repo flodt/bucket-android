@@ -1,7 +1,10 @@
 package de.schmidt.bucket.activities
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.provider.ContactsContract
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -10,21 +13,21 @@ import android.widget.TextView
 import androidx.core.content.FileProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
-import de.schmidt.bucket.utils.Authentication
-import de.schmidt.bucket.utils.NotificationUtils
-import de.schmidt.bucket.utils.ProgressManager
-import de.schmidt.bucket.utils.Storage
+import de.schmidt.bucket.utils.*
 
 class NewDocumentActivity : BaseActivity() {
     private lateinit var emailLabel: TextView
     private lateinit var pendingDocuments: TextView
     private lateinit var downloadButton: Button
+    private lateinit var openURLButton: Button
     private lateinit var clearButton: Button
     private lateinit var progressBar: ProgressBar
     private lateinit var fileOfFiles: TextView
     override val swipeRefresh: SwipeRefreshLayout?
         get() = findViewById(R.id.pull_to_refresh_new_document)
     private var downloading = false
+    private lateinit var handler: Handler
+    private lateinit var refresher: Runnable
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,15 +35,29 @@ class NewDocumentActivity : BaseActivity() {
 
         emailLabel = findViewById(R.id.signed_in_info_newdocument)
         downloadButton = findViewById(R.id.download_button)
+        openURLButton = findViewById(R.id.open_url_button)
         clearButton = findViewById(R.id.clear_button)
         progressBar = findViewById(R.id.download_progress_bar)
         fileOfFiles = findViewById(R.id.download_progress_info)
         pendingDocuments = findViewById(R.id.pending_documents_textview)
 
         clearButton.setOnClickListener {
-            Storage.deleteAllFilesAndThen(this) {
-                Log.d("FirebaseStorage", "Deleted bucket contents")
-                refresh()
+            Database.submitURL("") {
+                Storage.deleteAllFilesAndThen(this) {
+                    Log.d("FirebaseStorage", "Deleted bucket contents")
+                    refresh()
+                }
+            }
+        }
+
+        openURLButton.setOnClickListener {
+            //refresh to verify we have a URL
+            refresh()
+
+            //retrieve and open the URL
+            Database.retrieveURL(this) { databaseUrl ->
+                val browseUrlIntent = Intent(Intent.ACTION_VIEW, Uri.parse(databaseUrl))
+                startActivity(browseUrlIntent)
             }
         }
 
@@ -81,6 +98,22 @@ class NewDocumentActivity : BaseActivity() {
                 }
             }
         }
+
+        handler = Handler()
+        refresher = Runnable {
+            refreshSilently()
+            handler.postDelayed(refresher, 5_000L)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        handler.post(refresher)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(refresher)
     }
 
     override fun refresh() {
@@ -91,13 +124,21 @@ class NewDocumentActivity : BaseActivity() {
     private fun refreshSilently() {
         Log.d("NewDocumentActivity", "Silent refresh triggered…")
         //if we don't have any files in the bucket anymore, go back to the all set activity
-        Storage.listFilesAndThen {
-            if (it.isEmpty()) {
-                finish()
-                startActivity(Intent(this, AllSetActivity::class.java))
-            }
+        Storage.listFilesAndThen { list ->
+            //check if there is no URL in the bucket
+            Database.hasURL(this) { hasUrl ->
+                //update the buttons
+                downloadButton.visibility = if (list.isNotEmpty()) View.VISIBLE else View.INVISIBLE
+                openURLButton.visibility = if (hasUrl) View.VISIBLE else View.INVISIBLE
 
-            swipeRefresh?.isRefreshing = false
+                //leave if necessary
+                if (list.isEmpty() && !hasUrl) {
+                    finish()
+                    startActivity(Intent(this, AllSetActivity::class.java))
+                }
+
+                swipeRefresh?.isRefreshing = false
+            }
         }
     }
 
@@ -108,7 +149,9 @@ class NewDocumentActivity : BaseActivity() {
 
         //set the number of pending documents
         Storage.listFilesAndThen {
-            runOnUiThread { pendingDocuments.text = "${it.size} pending documents" }
+            runOnUiThread {
+                downloadButton.text = "Download ${it.size} files…"
+            }
         }
     }
 }

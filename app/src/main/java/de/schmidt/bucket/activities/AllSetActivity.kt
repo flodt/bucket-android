@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import de.schmidt.bucket.R
 import de.schmidt.bucket.utils.Authentication
+import de.schmidt.bucket.utils.Database
 import de.schmidt.bucket.utils.Storage
 
 class AllSetActivity : BaseActivity() {
@@ -71,14 +72,16 @@ class AllSetActivity : BaseActivity() {
                 Log.d("StorageResult", it.path)
             }
 
-            //if we have pending files, jump to the new document activity, otherwise do nothing
-            if (list.isNotEmpty()) {
-                Log.d("StorageResult", "Non-empty, showing document to user…")
-                finish()
-                startActivity(Intent(this, NewDocumentActivity::class.java))
-            }
+            Database.hasURL(this) { hasUrl ->
+                //if we have pending files, jump to the new document activity, otherwise do nothing
+                if (list.isNotEmpty() || hasUrl) {
+                    Log.d("AllSetActivity", "Non-empty bucket, showing document to user…")
+                    finish()
+                    startActivity(Intent(this, NewDocumentActivity::class.java))
+                }
 
-            swipeRefresh?.isRefreshing = false
+                swipeRefresh?.isRefreshing = false
+            }
         }
     }
 
